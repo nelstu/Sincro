@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sincronizador</title>
+    <!-- <link rel="stylesheet" href="https://cdn.korzh.com/metroui/v4/css/metro-all.min.css">-->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    />
+
+    <!-- Incluir Chosen CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css">
+    <style>
+      #documentos {
+        width: 70%;
+        /* reducir el ancho en un 30% */
+        height: 70%;
+        /* reducir la altura en un 30% */
+        margin: auto;
+        /* centrar la tabla horizontalmente */
+        margin-top: 50px;
+      }
+
+      #documentos thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f5f5f5;
+      }
+
+      #button-container,
+      #search-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 50px;
+      }
+
+      #button-container button {
+        margin-right: 10px;
+        /* establecer margen derecho */
+      }
+      /*
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0, 0, 0);
+        background-color: rgba(0, 0, 0, 0.4);
+        padding-top: 60px;
+      }
+
+      .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+
+      .close:hover,
+      .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+
+      */
+      body {
+    font-family: "Segoe UI", Arial, sans-serif; /* Fallback to Arial if Segoe UI is not available */
+    font-size: 12px; /* Equivalent to about 12pt in Windows, you can adjust as needed */
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Segoe UI", Arial, sans-serif;
+    /* Adjust sizes for headings as needed */
+}
+
+/* For responsive font sizes, you might use em or rem */
+p {
+    font-size: 1em; /* 1em is equivalent to the font size of the parent element, typically 16px */
+}
+
+/* Example of a class with a specific font size */
+.small-text {
+    font-size: 0.75em; /* Smaller text */
+}
+
+
+
+.chosen-container, .select2-container {
+    width: 100% !important;
+}
+
+.chosen-container .chosen-drop, .select2-container .select2-selection--single {
+    width: 100% !important;
+}
+
+
+
+    </style>
+
+    <!--<script src="https://cdn.korzh.com/metroui/v4/js/metro.min.js"></script>-->
+  </head>
+
+  <body>
+    <div id="container">
+      <div id="button-container">
+        <button class="button secondary" onclick="cargar()">
+          Cargar
+        </button>
+        <button class="button secondary" onclick="descargar()">
+          Descargar
+        </button>
+        <button class="button secondary"  onclick="procesar()">Procesar</button>
+        <button class="button secondary"  onclick="exportarAExcel()">Excel</button>
+        <button id="startServer">Iniciar Servidor</button>
+        <button id="stopServer">Detener Servidor</button>
+        
+        <button id="parametros"  onclick="parametros()">Parametros</button>
+      </div>
+      <div id="search-container">
+        <label>Buscar</label
+        ><input type="text" name="buscar" id="buscar" /><button class="button secondary" onclick="buscar()">Buscar</button><button class="button secondary" onclick="filtrotraspasar()">Traspasar</button>
+      </div>
+
+      <div id="table-container">
+        <table id="documentos" class="table table-striped">
+          <thead>
+            <th>Fecha</th>
+            <th>Numero</th>
+            <th>Rut</th>
+            <th>Razon</th>
+            <th>Tipo</th>
+            <th>Neto</th>
+            <th>Exento</th>
+            <th>Tasa Iva</th>
+            <th>Iva</th>
+            <th>Tipo Impuesto</th>
+            <th>Monto Impuesto</th>
+            <th>Total</th>
+            <th>Estado</th>
+            <th>Imprimir</th>
+            <th>Editar</th>
+          </thead>
+          <tbody id="mi-tbody"></tbody>
+        </table>
+      </div>
+
+     <!--Paramteros-->
+  <!-- Modal -->
+  <div class="modal fade" id="mi-modalparametros" tabindex="-1" role="dialog" aria-labelledby="mi-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="mi-modal-label">Parametros</h5>
+          
+        </div>
+        <div class="modal-body">
+          <div class="row mb-2">
+            <div class="col">id</div>
+            <div class="col">
+              <input type="text"  placeholder="id" aria-label="id"  id="id"  name="id" readonly />
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col">ip</div>
+            <div class="col">
+              <input type="text"  placeholder="ip" aria-label="ip"  id="ip"  name="ip"  />
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col">user</div>
+            <div class="col">
+              <input type="text"  placeholder="user" aria-label="user"  id="user"  name="user"  />
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col">pass</div>
+            <div class="col">
+              <input type="text"  placeholder="pass" aria-label="pass"  id="pass"  name="pass"  />
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col">Base de Datos</div>
+            <div class="col">
+              <input type="text"  placeholder="bbdd" aria-label="bbdd"  id="bbdd"  name="bbdd"  />
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col">Express</div>
+            <div class="col">
+              <input type="checkbox"  placeholder="express" aria-label="express"  id="express"  name="express"  />
+            </div>
+          </div>
+
+
+        </div>
+        <div class="modal-footer">
+          <div class="row">
+            <div class="col">
+              <button  onclick="grabar_bbdd();">Grabar</button>
+            </div>
+
+            <div class="col">
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+     <!--Fin Parametros-->
+
+      <!-- Modal -->
+      <div class="modal fade" id="mi-modaleditar" tabindex="-1" role="dialog" aria-labelledby="mi-modal-label" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="mi-modal-label">Detalle</h5>
+              
+            </div>
+            <div class="modal-body">
+              <div class="row">
+                <div class="col">id</div>
+                <div class="col">
+                  <input type="text"  placeholder="id" aria-label="id"  id="id"  name="id" readonly />
+                </div>
+              </div>
+              <div class="row">
+                <div class="col">Numero</div>
+                <div class="col">
+                  <input type="text"  placeholder="numero" aria-label="numero" id="numero" name="numero"/>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col">Estado</div>
+                <div class="col">
+                  <select id="estado" name="estado">
+                    <option value="">Seleccionar</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Traspasar">Traspasar</option>
+                    <option value="Traspasado">Traspasado</option>
+                  </select>
+                 
+                </div>
+                <div class="col">OC</div>
+                <div class="col">
+                  <input type="text"  placeholder="oc"  aria-label="oc" id="oc" name="oc"/>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col">Cta Contable</div>
+                <div class="col">
+                  <select id="ctacontable" name="ctacontable">
+                    <!-- Opciones del select -->
+                </select>
+                
+                </div>
+                <div class="col">CCosto</div>
+                <div class="col">
+                  <select id="ccosto" name="ccosto">
+                    <!-- Opciones del select -->
+                </select>
+                </div>
+              </div>
+            <div>
+              <div class="row">
+                <div class="col">Fecha Contable</div>
+                <div class="col">
+                  <input type="date"  placeholder="fecha_contable" aria-label="fecha_contable" id="fecha_contable" name="fecha_contable"/>
+                </div>
+                <div class="col">Sucursal</div>
+                <div class="col">
+                  <select id="sucursal" name="sucursal">
+                    <!-- Opciones del select -->
+                </select>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col">
+                  <table class="table table-striped" id="detalle">
+                    <thead>
+                      <tr>
+                        
+                        <th>Codigo</th>
+                        <th>Producto</th>
+                        <th>Un</th>
+                        <th>Precio</th>
+                        <th>Cantidad</th>
+                        <th>Desc</th>
+                        <th>Total</th>
+                        <th>Cta Contable</th>
+                        <th>CCostos</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <div class="row">
+                <div class="col">
+                  <button  onclick="grabar_modal();">Grabar</button>
+                </div>
+
+                <div class="col">
+                  <button   onclick="salir_modal();">Salir</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Modal -->
+    </div>
+
+    <!-- Modal Structure -->
+    <div id="pdfModal" class="modal">
+      <div class="modal-content">
+        <h3>Documento Electronico</h3>
+        <iframe id="pdfFrame" style="width: 100%; height: 500px"></iframe>
+      </div>
+      <div class="modal-footer">
+        <a href="#!" class="modal-close waves-effect waves-green btn-flat"
+          >Close</a
+        >
+      </div>
+    </div>
+<!-- Incluir renderer.js -->
+<script src="renderer.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+      crossorigin="anonymous"
+    ></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+
+
+
+
+    <script>
+      miurl = "http://186.64.123.171/apisincro/";
+      miurl2 = "http://186.64.123.171/eCompras/";
+
+      $('#mi-modaleditar').on('shown.bs.modal', function () {
+
+         //chosen
+       $.ajax({
+        url: 'http://localhost:3001/getPlanDB', // URL de tu endpoint
+        dataType: 'json',
+        success: function(data) {
+            var opciones = '<option value="">Seleccionar</option>';
+            $.each(data, function(index, item) {
+                opciones += '<option value="' + item.codigo + '">' + item.nombre + '</option>';
+            });
+            $('#ctacontable').html(opciones).chosen();
+        }
+    });
+
+       //fin chosen
+
+
+    //chosen ccosto
+    $.ajax({
+        url: 'http://localhost:3001/getccDB', // URL de tu endpoint
+        dataType: 'json',
+        success: function(data) {
+          var opciones = '<option value="">Seleccionar</option>';
+            $.each(data, function(index, item) {
+                opciones += '<option value="' + item.NREGUIST  + '">' + item.NOMBRE + '</option>';
+            });
+            $('#ccosto').html(opciones).chosen();
+        }
+    });
+
+       //fin chosen costo
+
+
+           //chosen sucursal
+    $.ajax({
+        url: 'http://localhost:3001/getsucursalDB', // URL de tu endpoint
+        dataType: 'json',
+        success: function(data) {
+          var opciones = '<option value="">Seleccionar</option>';
+            $.each(data, function(index, item) {
+                opciones += '<option value="' + item.CODIGO + '">' + item.DESCRIP + '</option>';
+            });
+            $('#sucursal').html(opciones).chosen();
+        }
+    });
+
+       //fin chosen sucursal
+
+
+});
+
+
+      $(document).ready(function () {
+
+      
+
+        cargardocumentos();
+
+    
+        $("#mi-boton").click(function () {
+          $("#mi-modal").modal("show");
+        });
+      });
+
+      function buscarmodal() {
+        alert("Aqui");
+        $("#myModal").modal("show");
+      }
+
+
+      function insertsqlserver(){
+        const p1 = "test4 dev1";
+
+$.ajax({
+    url: 'http://localhost:3001/insertData',
+    type: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify({ param1: p1 }),
+    success: function(data) {
+        console.log(data);
+        alert(data.message);
+    },
+    error: function(xhr, status, error) {
+        console.error('Error:', error);
+    }
+});
+
+      }
+
+
+      function descargar() {
+        var request = $.ajax({
+          url: miurl2 + "bajar.php",
+          type: "POST",
+          dataType: "json",
+          crossDomain: true,
+        }).then(function (response) {
+          alert("Descargado");
+        });
+
+        //Este bloque se ejecutará si no hay error en la petición
+        request.done(function (respuesta) {});
+
+        //Este bloque se ejecuta si hay un error
+        request.fail(function (jqXHR, textStatus) {
+          console.log("Hubo un error: " + textStatus);
+        });
+
+        var request = $.ajax({
+          url: miurl2 + "leer.php",
+          type: "POST",
+          dataType: "json",
+          crossDomain: true,
+        }).then(function (response) {
+          alert("Procesado");
+        });
+      }
+
+      function cargar() {
+        cargardocumentos();
+      }
+
+      function buscar() {
+        var search = $("#buscar").val();
+        $("#mi-tbody").empty();
+        var request = $.ajax({
+          url: miurl + "buscardocumentosuno.php",
+          type: "POST",
+          dataType: "json",
+          crossDomain: true,
+          data: {
+            term: search,
+          },
+        }).then(function (response) {
+          $.each(response, function (i, val) {
+            $("#mi-tbody").append(
+              "<tr><td>" +
+                val.fecha +
+                "</td><td>" +
+                val.numero +
+                "</td><td>" +
+                val.rut +
+                "</td><td>" +
+                val.razon +
+                "</td><td>" +
+                val.tipo +
+                "</td><td>" +
+                val.neto +
+                "</td><td>" +
+                val.exento +
+                "</td><td>" +
+                val.tasaiva +
+                "</td><td>" +
+                val.iva +
+                "</td><td>" +
+                val.tipoimpuesto +
+                "</td><td>" +
+                val.montoimpuesto +
+                "</td><td>" +
+                val.total +
+                "</td><td>" +
+                val.sincro +
+                '</td><td><img src="pdf.png" alt=pdf" width="80px" height="40px"   onclick="miFuncion(' +
+                val.id +
+                ','+val.numero+')"/></td><td><img src="editar.png" alt=pdf" width="30px" height="30px"   onclick="miFuncioneditar(' +
+                val.id +
+                ')"/></td></tr>'
+            );
+          });
+        });
+
+        //Este bloque se ejecutará si no hay error en la petición
+        request.done(function (respuesta) {});
+
+        //Este bloque se ejecuta si hay un error
+        request.fail(function (jqXHR, textStatus) {
+          console.log("Hubo un error: " + textStatus);
+        });
+      }
+
+
+
+      function filtrotraspasar() {
+        var search = $("#buscar").val();
+        $("#mi-tbody").empty();
+        var request = $.ajax({
+          url: miurl + "buscardocumentostraspasar.php",
+          type: "POST",
+          dataType: "json",
+          crossDomain: true,
+          data: {
+            term: search,
+          },
+        }).then(function (response) {
+          $.each(response, function (i, val) {
+            $("#mi-tbody").append(
+              "<tr><td>" +
+                val.fecha +
+                "</td><td>" +
+                val.numero +
+                "</td><td>" +
+                val.rut +
+                "</td><td>" +
+                val.razon +
+                "</td><td>" +
+                val.tipo +
+                "</td><td>" +
+                val.neto +
+                "</td><td>" +
+                val.exento +
+                "</td><td>" +
+                val.tasaiva +
+                "</td><td>" +
+                val.iva +
+                "</td><td>" +
+                val.tipoimpuesto +
+                "</td><td>" +
+                val.montoimpuesto +
+                "</td><td>" +
+                val.total +
+                "</td><td>" +
+                val.sincro +
+                '</td><td><img src="pdf.png" alt=pdf" width="80px" height="40px"   onclick="miFuncion(' +
+                val.id +
+                ','+val.numero+')"/></td><td><img src="editar.png" alt=pdf" width="30px" height="30px"   onclick="miFuncioneditar(' +
+                val.id +
+                ')"/></td></tr>'
+            );
+          });
+        });
+
+        //Este bloque se ejecutará si no hay error en la petición
+        request.done(function (respuesta) {});
+
+        //Este bloque se ejecuta si hay un error
+        request.fail(function (jqXHR, textStatus) {
+          console.log("Hubo un error: " + textStatus);
+        });
+      }
+
+
+      function crearPDF(id,num) {
+    
+        var search = id;
+        let numero = "";
+        let fecha = "";
+        var let = "";
+        let razon = "";
+        let a = []; let b = []; let c = []; let d = []; let e = []; let f = [];
+
+        var request2 = $.ajax({
+    url: miurl + "buscardetdoc.php",
+    type: "POST",
+    dataType: "json",
+    crossDomain: true,
+    data: {
+        term: num,
+    }
+}).then(function (response2) {
+    console.log(response2);
+    $.each(response2, function (i, val) {
+       // console.log("Item:", i, "Value:", val);
+        //b[i]=val.producto;
+        a.push(val.codigo);
+        b.push(val.producto);
+        c.push(val.un);
+        d.push(val.cantidad);
+        e.push(val.precio);
+        f.push(val.total);
+    });
+ // Now iterate over the arrays
+
+  
+}).fail(function (error) {
+    console.error("Error in AJAX request: ", error);
+});
+
+
+
+
+   
+        var request = $.ajax({
+          url: miurl + "buscardoc.php",
+          type: "POST",
+          dataType: "json",
+          crossDomain: true,
+          data: {
+            term: search,
+          },
+        }).then(function (response) {
+          $.each(response, function (i, val) {
+            numero = val.numero;
+            fecha = val.fecha;
+            rut = val.rut;
+            razon = val.razon;
+            direccion = val.direccion;
+            comuna = val.comuna;
+            ciudad = val.ciudad;
+            telefono = val.telefono;
+            if (telefono === null) {
+              telefono = ""; // Puedes cambiar este valor predeterminado
+            }
+
+            giro = val.giro;
+            neto = val.neto;
+            iva = val.iva;
+            total = val.total;
+
+            var doc = new window.jspdf.jsPDF();
+            // Set a default font size
+            doc.setFontSize(9);
+
+            doc.text(20, 20, "Numero");
+            doc.text(50, 20, numero);
+
+            doc.text(20, 25, "Fecha");
+            doc.text(50, 25, fecha);
+
+            doc.text(20, 30, "Rut");
+            doc.text(50, 30, rut);
+
+            doc.text(20, 35, "Razon");
+            doc.text(50, 35, razon);
+
+            doc.text(20, 40, "Direccion");
+            doc.text(50, 40, direccion);
+            doc.text(20, 45, "Comuna");
+            doc.text(50, 45, comuna);
+            doc.text(20, 50, "Ciudad");
+            doc.text(50, 50, ciudad);
+            doc.text(20, 55, "Giro");
+            doc.text(50, 55, giro);
+            doc.text(20, 60, "Telefono");
+            // doc.text(50, 100, telefono);
+
+            doc.text(20, 80, "Codigo");
+            doc.text(40, 80, "Producto");
+            doc.text(100, 80, "Un");
+            doc.text(120, 80, "Cantidad");
+            doc.text(150, 80, "Precio");
+            doc.text(180, 80, "Total");
+            let j=10;
+           
+
+            //ajax2
+           
+
+
+            console.log("largo:"+b.length);
+            j=10;
+  for (let i = 0; i < b.length; i++) { // Note: use < instead of <= in the loop condition
+      //  console.log("valor"+b[i]);
+        // Uncomment and use the following lines to add text to your PDF
+        let valorA = a[i] != null ? a[i] : '';
+    let valorB = b[i] != null ? b[i].toString().slice(0, 26) : '';
+    let valorC = c[i] != null ? c[i] : '';
+    let valorD = d[i] != null ? d[i] : '';
+    let valorE = e[i] != null ? e[i] : '';
+    let valorF = f[i] != null ? f[i] : '';
+    doc.text(20, 80 + j, valorA);
+    doc.text(40, 80 + j, valorB);
+    doc.text(100, 80 + j, valorC);
+    doc.text(120, 80 + j, valorD);
+    doc.text(150, 80 + j, valorE);
+    doc.text(180, 80 + j, valorF);
+      j=j+10;
+       
+    }
+ 
+
+// The for loop should not be here, as it will execute before the AJAX call completes.
+//console.log("Aqui");
+//doc.text(40, 100 , "b[0]");
+            //fin ajax2
+            doc.text(170, 260, "Neto");
+            doc.text(190, 260, neto);
+            doc.text(170, 270, "Iva");
+            doc.text(190, 270, iva);
+            doc.text(170, 280, "Total");
+            doc.text(190, 280, total);
+
+            // Save the PDF
+           // doc.save("documento.pdf");
+            // Obtener el data URI del documento
+            var pdfDataUri = doc.output("datauristring");
+
+            // Configurar el src del iframe dentro de la modal
+            document.getElementById("pdfFrame").src = pdfDataUri;
+
+            // Mostrar la modal
+            document.getElementById("pdfModal").style.display = "block";
+          });
+        });
+
+        //Este bloque se ejecutará si no hay error en la petición
+        request.done(function (respuesta) {});
+
+        //Este bloque se ejecuta si hay un error
+        request.fail(function (jqXHR, textStatus) {
+          console.log("Hubo un error: " + textStatus);
+        });
+      }
+
+      function miFuncion(id,num) {
+        console.log("El id de la imagen clickeada es: " + id);
+    
+        //Aquí puedes agregar el código que quieras ejecutar con el id capturado
+        crearPDF(id,num);
+      }
+
+      function miFuncioneditar(id) {
+        console.log("El id de la imagen editada es: " + id);
+        $("#id").val(id);
+
+        var search = id;
+        let numero = "";
+        let fecha = "";
+        var let = "";
+        let razon = "";
+        var request = $.ajax({
+          url: miurl + "buscardoc.php",
+          type: "POST",
+          dataType: "json",
+          crossDomain: true,
+          data: {
+            term: search,
+          },
+        }).then(function (response) {
+          $.each(response, function (i, val) {
+            numero = val.numero;
+            estado = val.estado;
+
+            oc = val.oc;
+            ccosto = val.ccosto;
+            ctacontable = val.ctacontable;
+            fecha_contable = val.fecha_contable;
+            sucursal = val.sucursal;
+
+            if (estado === null) {
+              estado = "Pendiente"; // Puedes cambiar este valor predeterminado
+            }
+
+            //ajax2
+            $("#detalle tbody").empty();
+            var request2 = $.ajax({
+                url: miurl + "buscardetdoc.php",
+                type: "POST",
+                dataType: "json",
+                crossDomain: true,
+                data: {
+                  term: numero,
+                },
+                }).then(function (response2) {
+                $.each(response2, function (i, val) {
+              
+                    $("#detalle").append("<tr  data-id='" + val.id + "'><td>" +val.codigo +"</td><td>" + val.producto+"</td><td>" + val.un+"</td></td><td>" + val.precio+"</td></td><td>" + val.cantidad+"</td><td></td><td>" + val.total+"</td><td  contenteditable='true' class='editable'>" + val.cc+"</td><td   contenteditable='true' class='editable'>" + val.ccostos+"</td></tr>");
+
+                });
+            });
+
+            //fin ajax2
+
+            $("#oc").val(oc);
+            $("#ccosto").val(ccosto);
+            // Actualizar Chosen
+            $('#ccosto').trigger('chosen:updated');
+            $("#ctacontable").val(ctacontable);
+            // Actualizar Chosen
+            $('#ctacontable').trigger('chosen:updated');
+            $("#fecha_contable").val(fecha_contable);
+            // Actualizar Chosen
+            $('#fecha_contable').trigger('chosen:updated');
+
+            $("#sucursal").val(sucursal);
+            // Actualizar Chosen
+            $('#sucursal').trigger('chosen:updated');
+
+
+            $("#numero").val(numero);
+            $("#estado").val(estado);
+            //
+          });
+        });
+
+        $("#mi-modaleditar").modal("show");
+      }
+
+
+      function exportarAExcel() {
+    // Obtener los datos de la tabla
+    let tabla = document.getElementById("documentos");
+    
+    // Convertir la tabla a hoja de trabajo (worksheet)
+    let ws = XLSX.utils.table_to_sheet(tabla);
+
+    // Crear un nuevo libro de trabajo (workbook) y añadir la hoja de trabajo
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Datos");
+
+    // Opciones para guardar el archivo (nombre y tipo)
+    XLSX.writeFile(wb, "DatosTabla.xlsx");
+}
+
+
+
+      function cargardocumentos() {
+        var search = "";
+        $("#mi-tbody").empty();
+        var request = $.ajax({
+          url: miurl + "buscardocumentos.php",
+          type: "POST",
+          dataType: "json",
+          crossDomain: true,
+          data: {
+            term: search,
+          },
+        }).then(function (response) {
+          $.each(response, function (i, val) {
+            $("#mi-tbody").append(
+              "<tr><td>" +
+                val.fecha +
+                "</td><td>" +
+                val.numero +
+                "</td><td>" +
+                val.rut +
+                "</td><td>" +
+                val.razon +
+                "</td><td>" +
+                val.tipo +
+                "</td><td>" +
+                val.neto +
+                "</td><td>" +
+                val.exento +
+                "</td><td>" +
+                val.tasaiva +
+                "</td><td>" +
+                val.iva +
+                "</td><td>" +
+                val.tipoimpuesto +
+                "</td><td>" +
+                val.montoimpuesto +
+                "</td><td>" +
+                val.total +
+                "</td><td>" +
+                val.sincro +
+                '</td><td><img src="pdf.png" alt=pdf" width="80px" height="40px"   onclick="miFuncion(' +
+                val.id +","+val.numero+
+                ')"/></td><td><img src="editar.png" alt=pdf" width="30px" height="30px"   onclick="miFuncioneditar(' +
+                val.id +
+                ')"/></td></tr>'
+            );
+          });
+        });
+
+        //Este bloque se ejecutará si no hay error en la petición
+        request.done(function (respuesta) {});
+
+        //Este bloque se ejecuta si hay un error
+        request.fail(function (jqXHR, textStatus) {
+          console.log("Hubo un error: " + textStatus);
+        });
+      }
+    </script>
+
+    <script>
+      // Cerrar la modal al hacer clic en el botón de cerrar
+      document
+        .querySelector(".modal-close")
+        .addEventListener("click", function () {
+          document.getElementById("pdfModal").style.display = "none";
+        });
+
+      // Cerrar la modal al hacer clic fuera de ella
+      window.onclick = function (event) {
+        var modal = document.getElementById("pdfModal");
+        if (event.target === modal) {
+          modal.style.display = "none";
+        }
+      };
+
+      function grabar_modal(){
+        let id=$("#id").val();
+        let estado=$("#estado").val();
+
+        let ctacontable=$("#ctacontable").val();
+        let ccosto=$("#ccosto").val();
+        let sucursal=$("#sucursal").val();
+        let fecha_contable=$("#fecha_contable").val();
+        let oc=$("#oc").val();
+
+        var request2 = $.ajax({
+                url: miurl + "updatedoc.php",
+                type: "POST",
+              //  dataType: "json",
+                crossDomain: true,
+                data: {
+                  term: id,
+                  estado:estado,
+                  ctacontable:ctacontable,
+                  ccosto:ccosto,
+                  sucursal:sucursal,
+                  fecha_contable:fecha_contable,
+                  oc:oc
+
+
+                },
+              }).then(function (response) {
+                  alert("actualizado");
+                  $("#mi-modaleditar").modal("hide");
+
+
+              });
+            }
+
+            function salir_modal(){
+              $("#mi-modaleditar").modal("hide");
+            }
+
+// Función para manejar la edición y actualizar via AJAX
+$(document).on('blur', '.editable', function() {
+    let td = $(this);
+    let updatedValue = td.text(); // Obtener el valor actualizado
+    let field = td.index() === 7 ? 'cc' : 'ccostos';
+
+    let row = td.closest('tr');
+    let id = row.data('id'); // Usar data-id// Asumiendo que el ID o un identificador único está en la primera celda
+
+    // Solicitud AJAX para actualizar los datos
+    $.ajax({
+        url: miurl +'updatelineadoc.php', // Cambia esto por la URL de tu script de servidor
+        type: 'POST',
+        data: {
+            id: id,
+            field: field,
+            value: updatedValue
+        },
+        success: function(response) {
+            // Código para manejar la respuesta
+            console.log(response);
+        },
+        error: function(xhr, status, error) {
+            // Código para manejar errores
+            console.error(error);
+        }
+    });
+});
+
+
+    </script>
+
+<script>
+  document.getElementById('startServer').addEventListener('click', function() {
+      fetch('http://localhost:4000/start-server')
+          .then(response => response.text())
+          .then(data => alert(data));
+  });
+
+  document.getElementById('stopServer').addEventListener('click', function() {
+      fetch('http://localhost:4000/stop-server')
+          .then(response => response.text())
+          .then(data => alert(data));
+  });
+</script>
+
+<script>
+
+function obtenerFechaFormatoSQL() {
+    const fecha = new Date();
+    const año = fecha.getFullYear();
+    const mes = ('0' + (fecha.getMonth() + 1)).slice(-2); // +1 porque los meses comienzan en 0
+    const dia = ('0' + fecha.getDate()).slice(-2);
+    const horas = ('0' + fecha.getHours()).slice(-2);
+    const minutos = ('0' + fecha.getMinutes()).slice(-2);
+    const segundos = ('0' + fecha.getSeconds()).slice(-2);
+
+    // Formato: YYYY-MM-DD HH:MM:SS
+    return `${año}-${mes}-${dia} ${horas}:${minutos}:${segundos}`;
+}
+
+const fechaParaSQL = obtenerFechaFormatoSQL();
+
+
+  function parametros(){
+    $("#mi-modalparametros").modal("show");
+  }
+
+  function procesar(){
+    var numero;
+    var rut;
+    var request2 = $.ajax({
+                url: miurl + "procesardoc.php",
+                type: "POST",
+                dataType: "json",
+                crossDomain: true,
+              }).then(function (response) {
+                $.each(response, function (i, val) {
+                       id=val.id;
+                       fecha=val.fecha;
+                       fecha_contable=val.fecha_contable;
+                       venc=val.venc;
+                       rut=val.rut;
+                       razon=val.razon;
+                       neto=val.neto;
+                       iva=val.iva;
+                       total=val.total;
+                       forma=val.forma;
+                       conta=val.ctacontable;
+                       cc=val.ccosto;
+                       stock=val.stock;
+                       direccion=val.direccion;
+                       comuna=val.comuna;
+                       ciudad=val.ciudad;
+                       giro=val.giro;
+                       numero=val.numero;
+                       ccosto=val.ccosto;
+                       ctacontable=val.ctacontable.trim();
+                       //console.log(numero);
+                       //console.log(rut);
+                       //console.log(ctacontable);
+                       //console.log(ccosto);
+                       var idcli="";
+                       var idcorr="";
+                       //verificar si existe
+                       var request3 = $.ajax({
+                           url: 'http://localhost:3001/existe',
+                           type: 'POST',
+                           contentType: 'application/json',
+                           data: JSON.stringify({ param1: numero, param2: rut }),
+                           success: function(data) {
+                           console.log(data);
+                           // Verificar si la respuesta es 'S' o 'N' y mostrar el alerta correspondiente
+                           if (data.existe === 'S') {
+                            
+                              // alert('OK');
+                               } else if (data.existe === 'N') {
+                               //obtener ultimo nrguist
+                               console.log("Paso 1");
+                               var request4 = $.ajax({
+                               url: 'http://localhost:3001/ultimonrguist',
+                               type: 'POST',
+                               contentType: 'application/json',
+                               data: JSON.stringify({ param3: rut }),
+                               success: function(data) {
+                                console.log("Paso 2");
+                                  console.log("valor ultimo nrguist"+data.valor);
+                                  //existe prov
+                                  var request5 = $.ajax({
+                                      url: 'http://localhost:3001/existeprov',
+                                      type: 'POST',
+                                      contentType: 'application/json',
+                                      data: JSON.stringify({ param4: rut }),
+                                      success: function(data) {
+                                         console.log("valor existeprov"+data.valor);
+                                        },
+                                      error: function(xhr, status, error) {
+                                         console.error('Error:', error);
+                                        }
+                                    });
+
+                                  //fin existe prov
+
+                                  //obteneridcli
+                                  var request6 = $.ajax({
+                                      url: 'http://localhost:3001/obteneridcli',
+                                      type: 'POST',
+                                      contentType: 'application/json',
+                                      data: JSON.stringify({ param5: rut }),
+                                      success: function(data) {
+                                         console.log("valor obteneridcli"+data.valor);
+                                         idcli=data.valor;
+                                        },
+                                      error: function(xhr, status, error) {
+                                         console.error('Error:', error);
+                                        }
+                                    });
+                                  //finobteneridcli
+
+
+                                 
+                                       //obtenerctacontable
+                                       var request8 = $.ajax({
+                                      url: 'http://localhost:3001/obtenerctacontable',
+                                      type: 'POST',
+                                      contentType: 'application/json',
+                                      data: JSON.stringify({ param7: ctacontable }),
+                                      success: function(data) {
+                                         console.log("valor obtenerctacontable"+data.valor);
+                                        },
+                                      error: function(xhr, status, error) {
+                                         console.error('Error:', error);
+                                        }
+                                    });
+                                  //finobtenerctacontable
+
+
+                                        //obtenerccosto
+                                 var request8 = $.ajax({
+                                      url: 'http://localhost:3001/obtenerccosto',
+                                      type: 'POST',
+                                      contentType: 'application/json',
+                                      data: JSON.stringify({ param8: ccosto}),
+                                      success: function(data) {
+                                         console.log("valor obtenerccosto"+data.valor);
+
+                                    //obtenercorrelativo
+                                      var request7 = $.ajax({
+                                      url: 'http://localhost:3001/obtenercorrelativo',
+                                      type: 'POST',
+                                      contentType: 'application/json',
+                                      data: JSON.stringify({ param5: rut }),
+                                      success: function(data) {
+                                         console.log("valor obtenercorrelativo"+data.valor);
+                                         idcorr=data.valor;
+
+
+                                         const fechaParaSQL = obtenerFechaFormatoSQL();
+                                  p1="1";
+                                  p2="100000";
+                                  p3="15268";
+                                  p4="861";
+                                  p5="1";
+                                  p6="Contado";
+                                  p7="13";
+                                  p8="8";
+                                  p9=numero;
+                                  p10=fechaParaSQL;
+                                  p11=idcli;
+                                  p12=rut;
+                                  p13=idcli;
+                                  p14="Migracion Compras 2024";
+
+                                  p15="0";
+                                  p16=total;
+                                  p17="8";
+                                  p18="0";
+                                  p19=neto;
+                                  p20="1";
+                                  p21="US6";
+                                  p22=iva;
+                                  p23=neto;
+                                  p24=iva;
+                                  p25=total;
+                                  p26="15026";
+                                  p27=ctacontable;
+                                  p28=ccosto;
+
+                                  p29="0";
+                                  p30="1";
+                                  p31="8";
+                                  p32="$";
+                                  p33="1";
+                                  p34=idcorr;
+                                  p35="";//fechaParaSQL;
+                                  p36="";//fechaParaSQL;
+                                  p37="0";
+                                  p38="0";
+                                  p39="0";
+                                  p40="0";
+                                  p41="0";
+                                  p42="0";
+                                  p43="0";
+                                  p44="0";
+                                  p45="";//fechaParaSQL;
+                                  p46="0";
+                                  p47="0";
+                                  p48="0";
+                                  p49="0";
+                                  //insertar
+                                  $.ajax({
+                                     url: 'http://localhost:3001/insertDOCU_DB',
+                                     type: 'POST',
+                                     contentType: 'application/json',
+                                     data: JSON.stringify({ param1: p1,param2: p2,param3: p3,param4: p4,param5: p5,param6: p6,param7: p7,param8: p8,param9: p9,param10: p10 ,param11: p11 ,param12: p12 ,param13: p13 ,param14: p14,param15: p15 ,param16: p16 ,param17: p17 ,param18: p18 ,param19: p19 ,param20: p20 ,param21: p21 ,param22: p22 ,param23: p23 ,param24: p24 ,param25: p25 ,param26: p26 ,param27: p27 ,param28: p28,param29: p29,param30: p30,param31: p31,param32: p32,param33: p33,param34: p34,param35: p35,param36: p36,param37: p37,param38: p38,param39: p39,param40: p40,param41: p41,param42: p42,param43: p43,param44: p44,param45: p45,param46: p46,param47: p47,param48: p48,param49: p49   }),
+                                     success: function(data) {
+                                        console.log(data);
+                                        alert(data.message);
+                                        //detalle
+                                        p1="";
+                                        p2="";
+                                        p3="";
+                                        p4="";
+                                        p5="";
+                                        p6="";
+                                        p7="";
+                                        p8="";
+                                        p9="";
+                                        p10="";
+                                        p11="";
+                                        p12="";
+                                        p13="";
+                                        p14="";
+                                        p15="";
+                                        p16="";
+                                        p17="";
+                                        p18="";
+                                        p19="";
+                                        p20="";
+                                        p21="";
+                                        p22="";
+                                        p23="";
+                                        p24="";
+                                        //ok
+                                        p25="0";
+                                        p26="";
+                                        p27="0";
+                                        p28="";
+                                        p29="0";
+                                        //ok
+                                        p30="";
+                                        p31="";
+                                        p32="";
+                                        p33="0";
+                                        p34="0";
+                                        p35="0";
+                                        p36="0";
+                                        p37="0";
+                                        p38="0";
+                                        p39="0";
+                                        p40="0";
+                                        p41="0";
+                                        p42="0";
+                                        p43="0";
+                                        p44="0";
+                                        p45="0";
+                                        p46="0";
+                                        p47="0";
+                                        p48="0";
+                                        p49="0";
+                                        p50="0";
+                                        p51="0";
+                                        p52="0";
+                                        p53="0";
+                                        p54="0";
+                                        p55="0";
+                                        p56="0";
+                                        p57="0";
+                                        p58="0";
+                                        p59="0";
+                                        p60="0";
+                                        p61="0";
+                                        p62="0";
+                                        p63="0";
+                                        p64="0";
+                                        p64="0";
+                                         //insertar
+                                         $.ajax({
+                                           url: 'http://localhost:3001/insertDOCDE_DB',
+                                           type: 'POST',
+                                           contentType: 'application/json',
+                                           data: JSON.stringify({ param1: p1,param2: p2,param3: p3,param4: p4,param5: p5,param6: p6,param7: p7,param8: p8,param9: p9,param10: p10 ,param11: p11 ,param12: p12 ,param13: p13 ,param14: p14,param15: p15 ,param16: p16 ,param17: p17 ,param18: p18 ,param19: p19 ,param20: p20 ,param21: p21 ,param22: p22 ,param23: p23 ,param24: p24 ,param25: p25 ,param26: p26 ,param27: p27 ,param28: p28,param29: p29,param30: p30,param31: p31,param32: p32,param33: p33,param34: p34,param35: p35,param36: p36,param37: p37,param38: p38,param39: p39,param40: p40,param41: p41,param42: p42,param43: p43,param44: p44,param45: p45,param46: p46,param47: p47,param48: p48,param49: p49 ,param50: p50 ,param51: p51 ,param52: p52 ,param53: p53 ,param54: p54 ,param55: p55 ,param56: p56 ,param57: p57 ,param58: p58 ,param59: p59 ,param60: p60 ,param61: p61 ,param62: p62 ,param63: p63 ,param64: p64 ,param65: p65   }),
+                                           success: function(data) {
+                                              console.log(data);
+                                              alert(data.message);
+                                              },
+                                           error: function(xhr, status, error) {
+                                              console.error('Error:', error);
+                                              }
+                                    });
+
+                                  //fin insertar
+                                        //fin detalle
+
+                                        },
+                                     error: function(xhr, status, error) {
+                                        console.error('Error:', error);
+                                      }
+                                    });
+
+                                  //fin insertar
+
+
+                                        },
+                                      error: function(xhr, status, error) {
+                                         console.error('Error:', error);
+                                        }
+                                    });
+                                  //finobtenercorrelativo
+
+
+                                        },
+                                      error: function(xhr, status, error) {
+                                         console.error('Error:', error);
+                                        }
+                                    });
+                                  //finobtenerccosto
+
+                                
+
+
+
+                              
+
+
+                                },
+                                error: function(xhr, status, error) {
+                                console.error('Error:', error);
+                                }
+                               });
+                              //fin ultimo nrguist
+                             //  alert('No');
+                             } else {
+                           // Si la respuesta no es ni 'S' ni 'N', puedes manejarlo como un caso inesperado
+                            alert('Respuesta inesperada del servidor');
+                            }
+                           },
+                          error: function(xhr, status, error) {
+                            console.error('Error:', error);
+                          }
+                        });
+
+                       //fin verificar si existe
+                      
+                       //alert(fecha);
+                });
+                  alert("procesado");
+                  
+
+
+              });
+  }
+
+</script>
+
+
+
+
+  </body>
+</html>
